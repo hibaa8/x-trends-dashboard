@@ -25,28 +25,9 @@ Risks: ${s.risks[0]}`;
 function generateReply(userText: string, cache: MarketCache): string {
   const q = userText.toLowerCase().trim();
 
-  // Refresh / scan
-  if (/\b(refresh|update|scan|latest|now)\b/.test(q)) {
-    const lines = cache.signals.map(
-      (s) =>
-        `• $${s.ticker} — ${s.direction} (${s.confidence}) · ${s.theme}`
-    );
-    return `Rescanned X data.\n\nCurrent regime:\n${cache.regime}\n\nActive signals:\n${lines.join(
-      "\n"
-    )}\n\nAsk about any ticker for the full thesis.`;
-  }
-
-  // Specific tickers
-  for (const s of cache.signals) {
-    const ticker = s.ticker.toLowerCase();
-    if (q.includes(ticker) || (ticker === "nvda" && q.includes("nvidia"))) {
-      return formatSignal(s);
-    }
-  }
-
-  // Investment / what to buy questions — uses signal + post sentiment
+  // 1. Investment questions first (highest priority)
   if (
-    /\b(invest|buy|suggest|recommendation|what should|next trade|portfolio|stocks? to|where to put)\b/.test(
+    /\b(invest|buy|suggest|recommendation|what should|next trade|portfolio|stock to|stocks to|where to put|what stock)\b/.test(
       q
     )
   ) {
@@ -54,7 +35,6 @@ function generateReply(userText: string, cache: MarketCache): string {
     const watch = cache.signals.filter((s) => s.direction === "Watch");
     const bearish = cache.signals.filter((s) => s.direction === "Bearish");
 
-    // Simple sentiment tally from the live posts
     const bullPosts = cache.posts.filter((p) => p.sentiment === "bullish").length;
     const bearPosts = cache.posts.filter((p) => p.sentiment === "bearish").length;
     const neutralPosts = cache.posts.filter((p) => p.sentiment === "neutral").length;
@@ -90,6 +70,25 @@ function generateReply(userText: string, cache: MarketCache): string {
 
     reply += `\nNot financial advice. This is a social-sentiment view only.`;
     return reply;
+  }
+
+  // 2. Specific tickers
+  for (const s of cache.signals) {
+    const ticker = s.ticker.toLowerCase();
+    if (q.includes(ticker) || (ticker === "nvda" && q.includes("nvidia"))) {
+      return formatSignal(s);
+    }
+  }
+
+  // 3. Refresh / scan (stricter — no bare "now")
+  if (/\b(refresh|update|scan|latest|rescann?)\b/.test(q)) {
+    const lines = cache.signals.map(
+      (s) =>
+        `• $${s.ticker} — ${s.direction} (${s.confidence}) · ${s.theme}`
+    );
+    return `Rescanned X data.\n\nCurrent regime:\n${cache.regime}\n\nActive signals:\n${lines.join(
+      "\n"
+    )}\n\nAsk about any ticker for the full thesis.`;
   }
 
   // Sentiment / market overview
