@@ -32,7 +32,7 @@ export default function LiveFeed({ posts }: { posts: Post[] }) {
         <div className="divide-y divide-border/70">
           {posts.map((post, i) => (
             <article
-              key={post.id}
+              key={post.id + post.timeAgo + post.likes}
               className="px-4 py-3.5 hover:bg-surface-2/60 transition-colors fade-in"
               style={{ animationDelay: `${i * 30}ms` }}
             >
@@ -64,6 +64,14 @@ export default function LiveFeed({ posts }: { posts: Post[] }) {
                         ${t}
                       </span>
                     ))}
+                    <a
+                      href={post.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-muted hover:text-accent transition ml-1"
+                    >
+                      View on X ↗
+                    </a>
                     <div className="flex items-center gap-3 text-[11px] text-muted ml-auto">
                       <span>{fmt(post.likes)}</span>
                       <span>{fmt(post.reposts)}</span>

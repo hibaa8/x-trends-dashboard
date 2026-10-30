@@ -1,6 +1,4 @@
 // Real posts + signals fetched via Grok native X tools (context: 30 Oct 2026)
-// Short-term: AI/semi positioning unwind + capex ROI questions
-// Constructive: concrete demand (IREN + Perplexity on Blackwell Ultra)
 
 export type Post = {
   id: string;
@@ -15,6 +13,7 @@ export type Post = {
   timeAgo: string;
   tickers: string[];
   sentiment: "bullish" | "bearish" | "neutral";
+  url: string;
 };
 
 export type Signal = {
@@ -33,7 +32,7 @@ export type Signal = {
 
 export const initialPosts: Post[] = [
   {
-    id: "1",
+    id: "2116296347884142962",
     author: "Paradis",
     handle: "@ParadisLabs",
     avatar: "https://pbs.twimg.com/profile_images/2110719323362717696/Ypu0GLqO.jpg",
@@ -46,9 +45,10 @@ export const initialPosts: Post[] = [
     timeAgo: "just now",
     tickers: ["NVDA", "AMZN", "INTC"],
     sentiment: "neutral",
+    url: "https://x.com/ParadisLabs/status/2116296347884142962",
   },
   {
-    id: "2",
+    id: "2116289155064062158",
     author: "Shay Boloor",
     handle: "@StockSavvyShay",
     avatar: "https://pbs.twimg.com/profile_images/1878129937737187328/DnEflT4L.jpg",
@@ -61,9 +61,10 @@ export const initialPosts: Post[] = [
     timeAgo: "29m",
     tickers: ["IREN", "NVDA"],
     sentiment: "bullish",
+    url: "https://x.com/StockSavvyShay/status/2116289155064062158",
   },
   {
-    id: "3",
+    id: "2116288048220852473",
     author: "Hardik Shah",
     handle: "@AIStockSavvy",
     avatar: "https://pbs.twimg.com/profile_images/1905031117385715713/nwlzlkYm.jpg",
@@ -76,9 +77,10 @@ export const initialPosts: Post[] = [
     timeAgo: "33m",
     tickers: ["IREN", "NVDA"],
     sentiment: "bullish",
+    url: "https://x.com/AIStockSavvy/status/2116288048220852473",
   },
   {
-    id: "4",
+    id: "2116285460267872416",
     author: "Joel",
     handle: "@growthrapidly",
     avatar: "https://pbs.twimg.com/profile_images/2095698623187357696/LdAEHaUS.jpg",
@@ -91,9 +93,10 @@ export const initialPosts: Post[] = [
     timeAgo: "44m",
     tickers: ["IREN", "NVDA"],
     sentiment: "bullish",
+    url: "https://x.com/growthrapidly/status/2116285460267872416",
   },
   {
-    id: "5",
+    id: "2116285712727453804",
     author: "Jam ossan",
     handle: "@OssanJam",
     avatar: "https://pbs.twimg.com/profile_images/2101526550214746113/yQ7QERWl.jpg",
@@ -106,9 +109,10 @@ export const initialPosts: Post[] = [
     timeAgo: "43m",
     tickers: ["NVDA", "AMD", "INTC"],
     sentiment: "bearish",
+    url: "https://x.com/OssanJam/status/2116285712727453804",
   },
   {
-    id: "6",
+    id: "1999188798727680397",
     author: "Beth Kindig",
     handle: "@Beth_Kindig",
     avatar: "https://pbs.twimg.com/profile_images/1606046913140101120/ogy7cKEX.jpg",
@@ -121,6 +125,7 @@ export const initialPosts: Post[] = [
     timeAgo: "earlier",
     tickers: ["NVDA", "AVGO"],
     sentiment: "bullish",
+    url: "https://x.com/Beth_Kindig/status/1999188798727680397",
   },
 ];
 
@@ -178,7 +183,6 @@ export const initialSignals: Signal[] = [
   },
 ];
 
-// Simple in-memory "cache" the chat and UI both read from
 export type MarketCache = {
   posts: Post[];
   signals: Signal[];
@@ -187,12 +191,25 @@ export type MarketCache = {
 };
 
 export function buildCache(posts: Post[], signals: Signal[]): MarketCache {
+  const bull = posts.filter((p) => p.sentiment === "bullish").length;
+  const bear = posts.filter((p) => p.sentiment === "bearish").length;
+
+  let regime =
+    "Short-term cautious on AI/semis (positioning unwind + capex questions). Concrete demand signals (IREN + Perplexity on Blackwell) remain constructive.";
+
+  if (bull > bear + 1) {
+    regime =
+      "Sentiment tilting more constructive. Bullish posts outnumber bearish. Demand signals (especially IREN/Blackwell) are getting attention.";
+  } else if (bear > bull) {
+    regime =
+      "Cautious tone dominates. More bearish/neutral posts than bullish. Focus remains on AI capex digestion and positioning.";
+  }
+
   return {
     posts,
     signals,
     lastScan: new Date().toISOString(),
-    regime:
-      "Short-term cautious on AI/semis (positioning unwind + capex questions). Concrete demand signals (IREN + Perplexity on Blackwell) remain constructive.",
+    regime,
   };
 }
 

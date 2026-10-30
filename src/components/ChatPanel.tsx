@@ -9,8 +9,12 @@ type Message = {
   content: string;
 };
 
-function formatSignal(s: Signal): string {
-  return `**$${s.ticker}** — ${s.direction} (${s.confidence})
+function formatSignal(s: Signal, cache: MarketCache): string {
+  const related = cache.posts
+    .filter((p) => p.tickers.includes(s.ticker))
+    .slice(0, 2);
+
+  let reply = `**$${s.ticker}** — ${s.direction} (${s.confidence})
 Theme: ${s.theme}
 Horizon: ${s.horizon}
 
@@ -20,6 +24,15 @@ Suggested:
 ${s.suggestedActions.map((a) => `• ${a}`).join("\n")}
 
 Risks: ${s.risks[0]}`;
+
+  if (related.length) {
+    reply += `\n\nKey posts:`;
+    related.forEach((p) => {
+      reply += `\n• ${p.author}: ${p.url}`;
+    });
+  }
+
+  return reply;
 }
 
 function generateReply(userText: string, cache: MarketCache): string {
@@ -49,6 +62,11 @@ function generateReply(userText: string, cache: MarketCache): string {
         reply += `\n$${s.ticker} — ${s.direction} (${s.confidence})\n`;
         reply += `${s.thesis.split(".").slice(0, 2).join(".")}.\n`;
         reply += s.suggestedActions.map((a) => `→ ${a}`).join("\n") + "\n";
+
+        const topPost = cache.posts.find((p) => p.tickers.includes(s.ticker));
+        if (topPost) {
+          reply += `Key post: ${topPost.url}\n`;
+        }
       });
     } else {
       reply += `No high-conviction Bullish signals right now.\n`;
@@ -76,7 +94,7 @@ function generateReply(userText: string, cache: MarketCache): string {
   for (const s of cache.signals) {
     const ticker = s.ticker.toLowerCase();
     if (q.includes(ticker) || (ticker === "nvda" && q.includes("nvidia"))) {
-      return formatSignal(s);
+      return formatSignal(s, cache);
     }
   }
 
