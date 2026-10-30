@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "X Trends | Real-time Trading Signals",
-  description: "Live X/Twitter sentiment analysis and AI-powered trading signals",
+  title: "X Trends",
+  description: "Real-time X sentiment and AI trading signals",
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-text min-h-screen`}
       >
         {children}
       </body>

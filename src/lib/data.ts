@@ -1,5 +1,6 @@
-// Real posts fetched via Grok native X tools (Oct 30 2026 context)
-// Mixed sentiment: short-term AI/semiconductor pressure + long-term demand still intact
+// Real posts + signals fetched via Grok native X tools (context: 30 Oct 2026)
+// Short-term: AI/semi positioning unwind + capex ROI questions
+// Constructive: concrete demand (IREN + Perplexity on Blackwell Ultra)
 
 export type Post = {
   id: string;
@@ -82,7 +83,7 @@ export const initialPosts: Post[] = [
     handle: "@growthrapidly",
     avatar: "https://pbs.twimg.com/profile_images/2095698623187357696/LdAEHaUS.jpg",
     content:
-      "Big news for $IREN bulls! 🔥 IREN highlighted how its multi-year partnership with Perplexity will support one of the fastest growing AI platforms. Perplexity handles more than 1.5 BILLION questions every month. Another strong validation of IREN's role in the AI infrastructure ecosystem.",
+      "Big news for $IREN bulls! IREN highlighted how its multi-year partnership with Perplexity will support one of the fastest growing AI platforms. Perplexity handles more than 1.5 BILLION questions every month. Another strong validation of IREN's role in the AI infrastructure ecosystem.",
     likes: 64,
     reposts: 5,
     views: 3812,
@@ -97,7 +98,7 @@ export const initialPosts: Post[] = [
     handle: "@OssanJam",
     avatar: "https://pbs.twimg.com/profile_images/2101526550214746113/yQ7QERWl.jpg",
     content:
-      "半導体株が徹底的に売り込まれる NASDAQ -2.86%, SOX -7.20%. Intel ~-29%, AMD ~-11%, NVIDIA ~-5%. AI demand itself isn't collapsing — this is a rotation out of crowded AI/semiconductor positioning into other sectors. Not a market collapse.",
+      "Semiconductor stocks sold hard. NASDAQ -2.86%, SOX -7.20%. Intel ~-29%, AMD ~-11%, NVIDIA ~-5%. AI demand itself isn't collapsing — this is a rotation out of crowded AI/semiconductor positioning into other sectors. Not a market collapse.",
     likes: 55,
     reposts: 1,
     views: 872,
@@ -112,7 +113,7 @@ export const initialPosts: Post[] = [
     handle: "@Beth_Kindig",
     avatar: "https://pbs.twimg.com/profile_images/1606046913140101120/ogy7cKEX.jpg",
     content:
-      "It has been no secret that Nvidia $NVDA has dominated the AI training cycle as its data center revenue has risen 12X in ten quarters, yet the forthcoming AI inference wave means the AI accelerator industry will widen beyond Nvidia and benefit other stocks such as Broadcom $AVGO.",
+      "Nvidia $NVDA has dominated the AI training cycle as its data center revenue has risen 12X in ten quarters, yet the forthcoming AI inference wave means the AI accelerator industry will widen beyond Nvidia and benefit other stocks such as Broadcom $AVGO.",
     likes: 319,
     reposts: 34,
     views: 46255,
@@ -135,13 +136,13 @@ export const initialSignals: Signal[] = [
       "Near-term pressure from crowded positioning and AI capex ROI questions after soft hyperscaler guides. Long-term demand (Blackwell, inference wave) remains intact. IREN/Perplexity deal is a positive data point for GPU consumption.",
     supportingPosts: [
       "ParadisLabs: short-term range-bound, longer-term constructive once positioning clears",
-      "Multiple posts on IREN + Perplexity using NVDA Blackwell Ultra GPUs",
-      "Japanese market summary showing rotation out of semis, not demand collapse",
+      "Multiple high-engagement posts on IREN + Perplexity using NVDA Blackwell Ultra GPUs",
+      "Market summary showing rotation out of semis, not demand collapse",
     ],
     suggestedActions: [
       "Avoid chasing strength until volume confirms a base",
       "Watch related names: IREN (positive catalyst), AVGO, TSM",
-      "Key levels / narrative to monitor: further hyperscaler commentary on AI spend",
+      "Key narrative to monitor: further hyperscaler commentary on AI spend",
     ],
     risks: [
       "Social sentiment is noisy and can reverse quickly",
@@ -161,68 +162,38 @@ export const initialSignals: Signal[] = [
       "Fresh multi-year agreement with Perplexity to run workloads on NVDA Blackwell Ultra GPUs. High engagement on the announcement and validation of IREN's AI infrastructure positioning. ~$3B contracted ARR still to come online.",
     supportingPosts: [
       "StockSavvyShay (234 likes): Perplexity on Blackwell Ultra at IREN",
-      "growthrapidly: 'extremely bullish on $IREN'",
-      "Official IREN post quoted widely",
+      "growthrapidly: remains extremely bullish on $IREN",
+      "Official IREN announcement widely quoted",
     ],
     suggestedActions: [
-      "Monitor follow-through volume and any additional customer announcements",
-      "Related: positive read-through for NVDA GPU demand",
+      "Monitor follow-through volume and additional customer announcements",
+      "Positive read-through for NVDA GPU demand",
     ],
     risks: [
-      "Smaller/mid-cap volatility",
-      "Broader AI sentiment still under pressure today",
+      "Broader AI sentiment is soft today",
+      "Mid-cap volatility is higher than mega-cap",
       "Not financial advice",
     ],
     updatedAt: new Date().toISOString(),
   },
 ];
 
-export const agentResponses: Record<string, string> = {
-  default: `I've scanned the latest X data using the trading-trends agent.
-
-**Current regime:** Short-term digestion of AI/semiconductor positioning after soft hyperscaler commentary. Long-term AI infrastructure demand still supported by deals like IREN + Perplexity on Blackwell Ultra.
-
-Ask me about a specific ticker (e.g. "NVDA", "IREN") or say "refresh signals" for an updated view.`,
-
-  nvda: `**NVDA Signal Update**
-
-**Direction:** Watch  
-**Confidence:** Medium  
-**Horizon:** Short-term
-
-**Thesis:** Near-term headwind from crowded Mag-7/AI positioning and questions around AI capex returns. However, concrete demand signals (Blackwell Ultra deployments, multi-year deals) remain positive. Today's ~5% move is part of a broader semi rotation rather than a demand collapse.
-
-**Supporting evidence:**
-• High-engagement posts on IREN/Perplexity using NVDA GPUs
-• Analyst commentary distinguishing positioning unwind from fundamental breakage
-• Longer-term training + inference runway still intact
-
-**Suggested actions:** Wait for clearer base / volume confirmation before adding. Related names to watch: IREN, AVGO.
-
-*Not financial advice. Social data is noisy.*`,
-
-  iren: `**IREN Signal Update**
-
-**Direction:** Bullish  
-**Confidence:** Medium  
-**Horizon:** Multi-day to weeks
-
-**Thesis:** Fresh multi-year deal with Perplexity to host workloads on NVDA Blackwell Ultra GPUs. Strong social engagement and clear positive validation of IREN's AI cloud positioning. Contracted ARR still ramping.
-
-**Supporting evidence:**
-• Official announcement + high-engagement quote tweets
-• Commentary highlighting AI agent compute intensity (bullish for hosters)
-
-**Risks:** Broader AI sentiment is soft today; mid-cap volatility is higher.
-
-*Not financial advice.*`,
-
-  refresh: `Refreshing analysis from latest X data...
-
-**Updated Signals (as of now):**
-
-1. **NVDA** — Watch (Medium) — Digestion phase after hyperscaler guides. Long-term demand intact.
-2. **IREN** — Bullish (Medium) — Perplexity/Blackwell deal is a clear positive catalyst.
-
-Market tone on X is currently cautious short-term on AI spend ROI, but not panic. Rotation > collapse narrative is dominant among higher-quality accounts.`,
+// Simple in-memory "cache" the chat and UI both read from
+export type MarketCache = {
+  posts: Post[];
+  signals: Signal[];
+  lastScan: string;
+  regime: string;
 };
+
+export function buildCache(posts: Post[], signals: Signal[]): MarketCache {
+  return {
+    posts,
+    signals,
+    lastScan: new Date().toISOString(),
+    regime:
+      "Short-term cautious on AI/semis (positioning unwind + capex questions). Concrete demand signals (IREN + Perplexity on Blackwell) remain constructive.",
+  };
+}
+
+export const defaultCache = buildCache(initialPosts, initialSignals);

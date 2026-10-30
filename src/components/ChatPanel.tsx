@@ -1,22 +1,127 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { agentResponses } from "@/lib/data";
+import type { MarketCache, Signal } from "@/lib/data";
 
 type Message = {
   id: string;
   role: "user" | "agent";
   content: string;
-  timestamp: Date;
 };
 
-export default function ChatPanel() {
+function formatSignal(s: Signal): string {
+  return `**$${s.ticker}** — ${s.direction} (${s.confidence})
+Theme: ${s.theme}
+Horizon: ${s.horizon}
+
+${s.thesis}
+
+Suggested:
+${s.suggestedActions.map((a) => `• ${a}`).join("\n")}
+
+Risks: ${s.risks[0]}`;
+}
+
+function generateReply(userText: string, cache: MarketCache): string {
+  const q = userText.toLowerCase().trim();
+
+  // Refresh / scan
+  if (/\b(refresh|update|scan|latest|now)\b/.test(q)) {
+    const lines = cache.signals.map(
+      (s) =>
+        `• $${s.ticker} — ${s.direction} (${s.confidence}) · ${s.theme}`
+    );
+    return `Rescanned X data.\n\nCurrent regime:\n${cache.regime}\n\nActive signals:\n${lines.join(
+      "\n"
+    )}\n\nAsk about any ticker for the full thesis.`;
+  }
+
+  // Specific tickers
+  for (const s of cache.signals) {
+    const ticker = s.ticker.toLowerCase();
+    if (q.includes(ticker) || (ticker === "nvda" && q.includes("nvidia"))) {
+      return formatSignal(s);
+    }
+  }
+
+  // Investment / what to buy questions — uses signal + post sentiment
+  if (
+    /\b(invest|buy|suggest|recommendation|what should|next trade|portfolio|stocks? to|where to put)\b/.test(
+      q
+    )
+  ) {
+    const bullish = cache.signals.filter((s) => s.direction === "Bullish");
+    const watch = cache.signals.filter((s) => s.direction === "Watch");
+    const bearish = cache.signals.filter((s) => s.direction === "Bearish");
+
+    // Simple sentiment tally from the live posts
+    const bullPosts = cache.posts.filter((p) => p.sentiment === "bullish").length;
+    const bearPosts = cache.posts.filter((p) => p.sentiment === "bearish").length;
+    const neutralPosts = cache.posts.filter((p) => p.sentiment === "neutral").length;
+
+    let reply = `Sentiment snapshot from latest X posts:\n`;
+    reply += `• Bullish posts: ${bullPosts}\n• Bearish posts: ${bearPosts}\n• Neutral: ${neutralPosts}\n\n`;
+    reply += `${cache.regime}\n\n`;
+
+    if (bullish.length) {
+      reply += `**Best idea from current scan:**\n`;
+      bullish.forEach((s) => {
+        reply += `\n$${s.ticker} — ${s.direction} (${s.confidence})\n`;
+        reply += `${s.thesis.split(".").slice(0, 2).join(".")}.\n`;
+        reply += s.suggestedActions.map((a) => `→ ${a}`).join("\n") + "\n";
+      });
+    } else {
+      reply += `No high-conviction Bullish signals right now.\n`;
+    }
+
+    if (watch.length) {
+      reply += `\n**Names to watch (wait for better entry):**\n`;
+      watch.forEach((s) => {
+        reply += `• $${s.ticker} — ${s.direction}. ${s.thesis.split(".")[0]}.\n`;
+      });
+    }
+
+    if (bearish.length) {
+      reply += `\n**Avoid / underweight for now:**\n`;
+      bearish.forEach((s) => {
+        reply += `• $${s.ticker}\n`;
+      });
+    }
+
+    reply += `\nNot financial advice. This is a social-sentiment view only.`;
+    return reply;
+  }
+
+  // Sentiment / market overview
+  if (/\b(sentiment|market|overview|regime|what.?s happening)\b/.test(q)) {
+    return `Current X-derived regime:\n\n${cache.regime}\n\nTop signals:\n${cache.signals
+      .map((s) => `• $${s.ticker}: ${s.direction} (${s.confidence})`)
+      .join("\n")}`;
+  }
+
+  // Help
+  if (/\b(help|what can|commands)\b/.test(q)) {
+    return `You can ask me:
+• "What should I invest in?" or "suggest stocks"
+• Specific tickers: NVDA, IREN, etc.
+• "refresh" or "latest scan"
+• "market sentiment" or "what's the regime"
+
+I answer from the live X cache (posts + structured signals).`;
+  }
+
+  // Default – still useful
+  return `Current regime from X:\n${cache.regime}\n\nActive signals: ${cache.signals
+    .map((s) => `$${s.ticker} (${s.direction})`)
+    .join(", ")}.\n\nAsk about a ticker or say "what should I invest in" for a concrete take.`;
+}
+
+export default function ChatPanel({ cache }: { cache: MarketCache }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "agent",
-      content: agentResponses.default,
-      timestamp: new Date(),
+      content: `X scan loaded.\n\n${cache.regime}\n\nAsk about a ticker (NVDA, IREN) or say "what should I invest in".`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -27,68 +132,34 @@ export default function ChatPanel() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  function getAgentReply(userText: string): string {
-    const lower = userText.toLowerCase();
-    if (lower.includes("nvda") || lower.includes("nvidia"))
-      return agentResponses.nvda;
-    if (lower.includes("iren")) return agentResponses.iren;
-    if (
-      lower.includes("refresh") ||
-      lower.includes("update") ||
-      lower.includes("scan")
-    )
-      return agentResponses.refresh;
-    if (lower.includes("help") || lower.includes("what can"))
-      return `I can help with:
-
-• "NVDA" or "NVIDIA" — detailed signal
-• "IREN" — latest on the Perplexity deal
-• "refresh signals" — re-run analysis
-• Or ask about any ticker/theme in the current feed
-
-I use the x-trading-trends skill + live X data patterns.`;
-
-    return `Got it. Based on the current X scan:
-
-Short-term sentiment around AI/semis is cautious (positioning unwind + capex questions). Concrete demand signals (e.g. IREN + Perplexity on Blackwell) remain constructive.
-
-Ask about a specific name or say **refresh signals** for a full update.`;
-  }
-
   async function handleSend(e?: React.FormEvent) {
     e?.preventDefault();
     const text = input.trim();
     if (!text || isTyping) return;
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: text,
-      timestamp: new Date(),
-    };
-    setMessages((m) => [...m, userMsg]);
+    setMessages((m) => [
+      ...m,
+      { id: Date.now().toString(), role: "user", content: text },
+    ]);
     setInput("");
     setIsTyping(true);
 
-    // Simulate agent thinking
-    await new Promise((r) => setTimeout(r, 600 + Math.random() * 800));
+    await new Promise((r) => setTimeout(r, 500 + Math.random() * 700));
 
-    const reply: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "agent",
-      content: getAgentReply(text),
-      timestamp: new Date(),
-    };
-    setMessages((m) => [...m, reply]);
+    const reply = generateReply(text, cache);
+    setMessages((m) => [
+      ...m,
+      { id: (Date.now() + 1).toString(), role: "agent", content: reply },
+    ]);
     setIsTyping(false);
   }
 
   return (
-    <section className="flex flex-col h-full min-h-0">
+    <section className="flex flex-col h-full min-h-0 bg-surface">
       <div className="px-4 py-3 border-b border-border">
-        <h2 className="text-sm font-semibold">Agent Chat</h2>
+        <h2 className="text-sm font-medium tracking-tight">Agent</h2>
         <p className="text-[11px] text-muted mt-0.5">
-          Ask about signals, tickers, or say “refresh”
+          Answers from current X cache
         </p>
       </div>
 
@@ -96,33 +167,32 @@ Ask about a specific name or say **refresh signals** for a full update.`;
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex ${
-              msg.role === "user" ? "justify-end" : "justify-start"
-            }`}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap ${
+              className={`max-w-[92%] rounded-lg px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap ${
                 msg.role === "user"
-                  ? "bg-accent text-white rounded-br-md"
-                  : "bg-card border border-border text-slate-300 rounded-bl-md"
+                  ? "bg-accent text-bg rounded-br-sm"
+                  : "bg-surface-2 border border-border text-text/90 rounded-bl-sm"
               }`}
             >
               {msg.content}
             </div>
           </div>
         ))}
+
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
+            <div className="bg-surface-2 border border-border rounded-lg px-4 py-3">
               <div className="flex gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce" />
                 <span
                   className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce"
-                  style={{ animationDelay: "0.15s" }}
+                  style={{ animationDelay: "0.12s" }}
                 />
                 <span
                   className="w-1.5 h-1.5 rounded-full bg-muted animate-bounce"
-                  style={{ animationDelay: "0.3s" }}
+                  style={{ animationDelay: "0.24s" }}
                 />
               </div>
             </div>
@@ -139,13 +209,13 @@ Ask about a specific name or say **refresh signals** for a full update.`;
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about NVDA, IREN, or refresh…"
-          className="flex-1 bg-card border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent/60 placeholder:text-muted"
+          placeholder="Ask about NVDA, IREN, or what to invest in…"
+          className="flex-1 bg-bg border border-border rounded-md px-3 py-2 text-sm outline-none focus:border-accent/50 placeholder:text-muted"
         />
         <button
           type="submit"
           disabled={!input.trim() || isTyping}
-          className="px-4 py-2.5 rounded-xl bg-accent text-white text-sm font-medium hover:bg-blue-600 transition disabled:opacity-40"
+          className="px-4 py-2 rounded-md bg-accent text-bg text-sm font-medium hover:opacity-90 transition disabled:opacity-40"
         >
           Send
         </button>

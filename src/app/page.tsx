@@ -1,59 +1,79 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/Header";
 import LiveFeed from "@/components/LiveFeed";
 import SignalsPanel from "@/components/SignalsPanel";
 import ChatPanel from "@/components/ChatPanel";
-import { initialPosts, initialSignals, type Post, type Signal } from "@/lib/data";
+import {
+  initialPosts,
+  initialSignals,
+  buildCache,
+  type Post,
+  type Signal,
+  type MarketCache,
+} from "@/lib/data";
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [signals, setSignals] = useState<Signal[]>(initialSignals);
+  const [cache, setCache] = useState<MarketCache>(
+    buildCache(initialPosts, initialSignals)
+  );
   const [lastUpdated, setLastUpdated] = useState("just now");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Simulate mild live updates
+  // Keep cache in sync so chat always sees latest data
   useEffect(() => {
-    const interval = setInterval(() => {
-      setLastUpdated((prev) => {
-        if (prev === "just now") return "1m ago";
-        if (prev === "1m ago") return "2m ago";
-        return prev;
-      });
-    }, 60000);
-    return () => clearInterval(interval);
+    setCache(buildCache(posts, signals));
+  }, [posts, signals]);
+
+  // Real-time clock
+  useEffect(() => {
+    const times = ["just now", "1m ago", "2m ago", "3m ago", "4m ago", "5m ago"];
+    let i = 0;
+    const id = setInterval(() => {
+      i = Math.min(i + 1, times.length - 1);
+      setLastUpdated(times[i]);
+    }, 45_000);
+    return () => clearInterval(id);
   }, []);
 
-  async function handleRefresh() {
-    setIsRefreshing(true);
-    // Simulate analysis delay
-    await new Promise((r) => setTimeout(r, 1200));
+  // Light real-time simulation: occasionally promote a post to top
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPosts((prev) => {
+        if (prev.length < 2) return prev;
+        const copy = [...prev];
+        const idx = 1 + Math.floor(Math.random() * (copy.length - 1));
+        const [item] = copy.splice(idx, 1);
+        return [{ ...item, timeAgo: "just now" }, ...copy];
+      });
+      setLastUpdated("just now");
+    }, 90_000);
+    return () => clearInterval(id);
+  }, []);
 
-    // In a real version this would call the x-trading-trends agent / X tools.
-    // For now we just bump the timestamp and lightly reorder to feel live.
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await new Promise((r) => setTimeout(r, 900));
     setSignals((prev) =>
-      prev.map((s) => ({
-        ...s,
-        updatedAt: new Date().toISOString(),
-      }))
+      prev.map((s) => ({ ...s, updatedAt: new Date().toISOString() }))
     );
     setLastUpdated("just now");
     setIsRefreshing(false);
-  }
+  }, []);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden bg-bg text-text">
       <Header lastUpdated={lastUpdated} />
 
-      <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-0">
-        {/* Left: Live Feed */}
-        <div className="lg:col-span-4 border-r border-border flex flex-col min-h-0 bg-background">
+      <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12">
+        <div className="lg:col-span-4 border-r border-border flex flex-col min-h-0">
           <LiveFeed posts={posts} />
         </div>
 
-        {/* Center: AI Signals */}
-        <div className="lg:col-span-4 border-r border-border flex flex-col min-h-0 bg-background">
+        <div className="lg:col-span-4 border-r border-border flex flex-col min-h-0">
           <SignalsPanel
             signals={signals}
             onRefresh={handleRefresh}
@@ -61,9 +81,8 @@ export default function Home() {
           />
         </div>
 
-        {/* Right: Chat */}
-        <div className="lg:col-span-4 flex flex-col min-h-0 bg-background">
-          <ChatPanel />
+        <div className="lg:col-span-4 flex flex-col min-h-0">
+          <ChatPanel cache={cache} />
         </div>
       </main>
     </div>
